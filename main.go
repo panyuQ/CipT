@@ -9,6 +9,4 @@ func main() {
 	if FlagBool["web"] {
 		Web()
 	}
-
-	task()
 }
