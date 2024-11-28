@@ -7,14 +7,14 @@ import (
 )
 
 // 示例任务处理函数
-func exampleTaskHandler(args []interface{}) interface{} {
+func exampleTaskHandler(args []interface{}) []interface{} {
 	sum := 0
 	for _, arg := range args {
 		if num, ok := arg.(int); ok {
 			sum += num
 		}
 	}
-	return sum
+	return []interface{}{sum}
 }
 
 func TestTasks(t *testing.T) {
@@ -26,12 +26,10 @@ func TestTasks(t *testing.T) {
 
 	// 获取系统CPU核心数
 	workers := runtime.NumCPU()
-	bufferSize := 100 // 设置任务队列的缓冲区大小
-
-	logger.Info.Printf("Starting with %d workers and buffer size %d\n", workers, bufferSize)
+	bufferSize := workers * 100 // 设置任务队列的缓冲区大小
 
 	// 创建工作池并设置任务处理函数
-	wp := NewWorkPool(workers, bufferSize, bufferSize, exampleTaskHandler, logger)
+	wp := NewWorkPool(workers, bufferSize, bufferSize*100, exampleTaskHandler, logger)
 
 	wp.Start()
 
@@ -42,11 +40,11 @@ func TestTasks(t *testing.T) {
 	}
 
 	// 停止工作池并等待所有任务完成
-	wp.Stop(false)
+	wp.Stop(false) // 非强制性关闭
 
+	wp.logInfo("Output task results...")
 	// 输出任务结果
 	for result := range wp.Results {
 		wp.logInfo("Task", result.ID, "is done(", result.Result, ")")
 	}
-	wp.logInfo("All tasks completed")
 }
