@@ -42,8 +42,7 @@ func TestTasks(t *testing.T) {
 	}
 
 	// 停止工作池并等待所有任务完成
-	wp.Stop()
-	wp.Wait()
+	wp.Stop(false)
 
 	// 输出任务结果
 	for result := range wp.Results {

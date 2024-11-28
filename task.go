@@ -103,14 +103,14 @@ func (wp *WorkPool) AddTask(task Task) {
 	}
 }
 
-func (wp *WorkPool) Stop() {
-	wp.stopOnce.Do(func() {
-		close(wp.stop) // 广播停止信号
-	})
-}
-
-func (wp *WorkPool) Wait() {
-	wp.waitGroup.Wait() // 等待所有 worker 完成任务
-	close(wp.Results)   // 等待所有结果写入完成后关闭
-	close(wp.tasks)     // 确保所有 goroutine 退出后关闭任务通道
+func (wp *WorkPool) Stop(enforce bool) {
+	if enforce { // 强制结束
+		wp.stopOnce.Do(func() {
+			close(wp.stop) // 广播停止信号
+		})
+		wp.waitGroup.Wait() // 等待所有 worker 完成任务
+		close(wp.Results)   // 等待所有结果写入完成后关闭
+		close(wp.tasks)     // 确保所有 goroutine 退出后关闭任务通道
+	} else { // 非强制结束
+	}
 }
