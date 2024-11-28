@@ -24,13 +24,22 @@ import (
 	"net/url"
 )
 
-type Cip struct {
-	Before []byte // Before 编码前/解码后
-	After  []byte // After 编码后/解码前
-	Method string // Method 方法
+type CipT struct {
+	Text     string // 待处理文本
+	Encoding string // 编码方式, 默认为 UTF-8
+	Method   string // Method 方法
 }
 
-var allMethods = []string{
+// NewCipT 是一个构造函数，用于创建 Cip 结构体实例
+func NewCipT(text, method string) *CipT {
+	return &CipT{
+		Text:     text,
+		Encoding: "UTF-8", // 设置默认值
+		Method:   method,
+	}
+}
+
+var AllMethods = []string{
 	"ASCII85",
 
 	"Base4", "Base8", "Base16", "Base32", "Base64",
@@ -39,6 +48,10 @@ var allMethods = []string{
 	"UUEncode", "XXEncode",
 
 	"URL",
+}
+
+var AllEncodings = []string{
+	"UTF-8", "GBK", "GB2312", "GB18030", "HZGB2312",
 }
 
 // enFunc 定义编码方法类型（[]byte）
@@ -105,6 +118,7 @@ var decoderFunc = map[string]deFunc{
 
 // FromUTF8_To 把 UTF-8 的数据，转换为 指定编码的数据
 var FromUTF8_To = map[string]enFunc{
+	"UTF-8": func(data []byte) ([]byte, error) { return data, nil },
 	"GBK": func(data []byte) ([]byte, error) {
 		r := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewEncoder())
 		res, err := io.ReadAll(r)
@@ -129,6 +143,7 @@ var FromUTF8_To = map[string]enFunc{
 
 // ToUTF8_From 把指定编码的数据，转换为 UTF-8 的数据
 var ToUTF8_From = map[string]deFunc{
+	"UTF-8": func(data []byte) ([]byte, error) { return data, nil },
 	"GBK": func(data []byte) ([]byte, error) {
 		r := transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder())
 		res, err := io.ReadAll(r)
@@ -151,35 +166,53 @@ var ToUTF8_From = map[string]deFunc{
 	},
 }
 
-// GetSupportedMethods 查看支持的加密解密方法
-func GetSupportedMethods() []string {
-	return allMethods
-}
-
-func (t *Cip) Encode() error {
-	if encodeFunc, ok := encoderFunc[t.Method]; ok {
+func (t *CipT) Encode() (string, error) {
+	if t.Encoding == "" {
+		t.Encoding = "UTF-8"
+	}
+	if encodeFunc := encoderFunc[t.Method]; encodeFunc != nil {
 		// 如果 method 对应的编码函数存在，则调用
-		res, err := encodeFunc(t.Before)
-		if err != nil {
-			return err
+		if encoding := FromUTF8_To[t.Encoding]; encoding != nil {
+			b, err := encoding([]byte(t.Text))
+			if err != nil {
+				return "", err
+			}
+			res, err := encodeFunc(b)
+			if err != nil {
+				return "", err
+			} else {
+				return string(res), nil
+			}
+		} else {
+			return "", errors.New("Unknown Encoding ( " + t.Encoding + " )")
 		}
-		t.After = res
-		return nil
 	} else {
-		return errors.New("Unknown encoding method ( " + t.Method + " )")
+		return "", errors.New("Unknown Method ( " + t.Method + " )")
 	}
 }
 
-func (t *Cip) Decode() error {
-	if decodeFunc, ok := decoderFunc[t.Method]; ok {
-		// 如果 method 对应的解码函数存在，则调用
-		res, err := decodeFunc(t.After)
-		if err != nil {
-			return err
+func (t *CipT) Decode() (string, error) {
+	if t.Encoding == "" {
+		t.Encoding = "UTF-8"
+	}
+	if decodeFunc := decoderFunc[t.Method]; decodeFunc != nil {
+		// 如果 method 对应的编码函数存在，则调用
+		if encoding := ToUTF8_From[t.Encoding]; encoding != nil {
+			res, err := decodeFunc([]byte(t.Text))
+			if err != nil {
+				return "", err
+			} else {
+				res, err := encoding(res)
+				if err != nil {
+					return "", err
+				} else {
+					return string(res), nil
+				}
+			}
+		} else {
+			return "", errors.New("Unknown Encoding ( " + t.Encoding + " )")
 		}
-		t.Before = res
-		return nil
 	} else {
-		return errors.New("Unknown decoding method ( " + t.Method + " )")
+		return "", errors.New("Unknown Method ( " + t.Method + " )")
 	}
 }
