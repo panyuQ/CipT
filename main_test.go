@@ -1,7 +1,7 @@
 package main
 
 import (
-	"CipT/NoKey"
+	"CipT/Core/NoKey"
 	"testing"
 )
 
@@ -14,9 +14,9 @@ var (
 		{
 			Plaintext: "Hello, World!",
 			Ciphertext: map[string]string{
-				"UTF-8": "SGVsbG8sIFdvcmxkIQ==",
+				"UTF-8": "G4JgP4wg63RjQalY6E==",
 			},
-			Method: "Base64",
+			Method: "UUEncode",
 		},
 		{
 			Plaintext: "你好，世界！",
