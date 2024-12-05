@@ -15,7 +15,7 @@
 package base64
 
 import (
-	base2 "CipT/Core/NoKey/BaseFamily/codec/base"
+	"CipT/Core/NoKey/BaseFamily/codec/base"
 	"encoding/binary"
 	"github.com/pkg/errors"
 	"strconv"
@@ -29,10 +29,10 @@ const (
 	errByteFormat  = "codec/base64: illegal base64 data at input byte, pos:%d."
 )
 
-var StdCodec, _ = NewCodec(stdEncoder, base2.StdPadding)
-var UrlCodec, _ = NewCodec(urlEncoder, base2.StdPadding)
-var StdRawCodec, _ = NewCodec(stdEncoder, base2.NotPadding)
-var UrlRawCodec, _ = NewCodec(urlEncoder, base2.NotPadding)
+var StdCodec, _ = NewCodec(stdEncoder, base.StdPadding)
+var UrlCodec, _ = NewCodec(urlEncoder, base.StdPadding)
+var StdRawCodec, _ = NewCodec(stdEncoder, base.NotPadding)
+var UrlRawCodec, _ = NewCodec(urlEncoder, base.NotPadding)
 
 type base64Codec struct {
 	encodeMap [64]byte
@@ -41,37 +41,34 @@ type base64Codec struct {
 	strict    bool
 }
 
-func NewCodec(encoder string, padding rune) (base2.IEncoding, error) {
+func NewCodec(encoder string, padding rune) (base.IEncoding, error) {
 	if len(encoder) != stdEncoderSize {
-		return nil, base2.ErrEncoderSize(codec, stdEncoderSize)
+		return nil, base.ErrEncoderSize(codec, stdEncoderSize)
 	}
 
-	if base2.IsIllegalCharacter(padding) {
-		return nil, base2.ErrPaddingIllegalChar(codec)
+	if base.IsIllegalCharacter(padding) {
+		return nil, base.ErrPaddingIllegalChar(codec)
 	}
 
 	b := &base64Codec{decodeMap: make(map[byte]int, stdEncoderSize), padding: padding}
 	mp := make(map[rune]struct{}, stdEncoderSize)
 
 	for k, v := range encoder {
-		if base2.IsIllegalCharacter(v) {
-			return nil, base2.ErrEncoderIllegalChar(codec)
-		}
-		if v == padding {
-			return nil, base2.ErrPaddingAlphabet(codec)
+		if base.IsIllegalCharacter(v) {
+			return nil, base.ErrEncoderIllegalChar(codec)
 		}
 		b.encodeMap[k] = byte(v)
 		b.decodeMap[byte(v)] = k
 		mp[v] = struct{}{}
 	}
 	if len(mp) != stdEncoderSize {
-		return nil, base2.ErrEncoderRepeatChar(codec)
+		return nil, base.ErrEncoderRepeatChar(codec)
 	}
 	return b, nil
 }
 
 func (b *base64Codec) encodedLen(n int) int {
-	if b.padding == base2.NotPadding {
+	if b.padding == base.NotPadding {
 		return (n*8 + 5) / 6 // minimum # chars at 6 bits per char
 	}
 	return (n + 2) / 3 * 4 // minimum # 4-char quanta, 3 bytes each
@@ -109,11 +106,11 @@ func (b *base64Codec) encode(dst, src []byte) {
 	switch remain {
 	case 2:
 		dst[di+2] = b.encodeMap[val>>6&0x3F]
-		if b.padding != base2.NotPadding {
+		if b.padding != base.NotPadding {
 			dst[di+3] = byte(b.padding)
 		}
 	case 1:
-		if b.padding != base2.NotPadding {
+		if b.padding != base.NotPadding {
 			dst[di+2] = byte(b.padding)
 			dst[di+3] = byte(b.padding)
 		}
@@ -127,7 +124,7 @@ func (b *base64Codec) Encode(src []byte) ([]byte, error) {
 }
 
 func (b *base64Codec) decodedLen(n int) int {
-	if b.padding == base2.NotPadding {
+	if b.padding == base.NotPadding {
 		// Unpadded data may end with partial block of 2-3 characters.
 		return n * 6 / 8
 	}
@@ -144,7 +141,7 @@ func (b *base64Codec) decodeQuantum(dst, src []byte, si int) (nsi, n int, err er
 			switch {
 			case j == 0:
 				return si, 0, nil
-			case j == 1, b.padding != base2.NotPadding:
+			case j == 1, b.padding != base.NotPadding:
 				return si, 0, errors.Errorf(errByteFormat, si-j)
 			}
 			dlen = j

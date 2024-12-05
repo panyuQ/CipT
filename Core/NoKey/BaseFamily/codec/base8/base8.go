@@ -15,7 +15,7 @@
 package base8
 
 import (
-	base2 "CipT/Core/NoKey/BaseFamily/codec/base"
+	"CipT/Core/NoKey/BaseFamily/codec/base"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +29,7 @@ var (
 	errEncodedDataSize = errors.New("codec/base8: invalid encoded data length.")
 )
 
-var StdCodec, _ = NewCodec(StdEncoder, base2.StdPadding)
+var StdCodec, _ = NewCodec(StdEncoder, base.StdPadding)
 
 type base8Codec struct {
 	encodeMap [8]byte
@@ -37,23 +37,20 @@ type base8Codec struct {
 	padding   rune
 }
 
-func NewCodec(encoder string, padding rune) (base2.IEncoding, error) {
+func NewCodec(encoder string, padding rune) (base.IEncoding, error) {
 	if len(encoder) != stdEncoderSize {
-		return nil, base2.ErrEncoderSize(codec, stdEncoderSize)
+		return nil, base.ErrEncoderSize(codec, stdEncoderSize)
 	}
 
-	if base2.IsIllegalCharacter(padding) {
-		return nil, base2.ErrPaddingIllegalChar(codec)
+	if base.IsIllegalCharacter(padding) {
+		return nil, base.ErrPaddingIllegalChar(codec)
 	}
 
 	mp := make(map[rune]struct{}, stdEncoderSize)
 	b := &base8Codec{decodeMap: make(map[byte]int, stdEncoderSize), padding: padding}
 	for k, v := range encoder {
-		if base2.IsIllegalCharacter(v) {
-			return nil, base2.ErrEncoderIllegalChar(codec)
-		}
-		if v == padding {
-			return nil, base2.ErrPaddingAlphabet(codec)
+		if base.IsIllegalCharacter(v) {
+			return nil, base.ErrEncoderIllegalChar(codec)
 		}
 		b.decodeMap[byte(v)] = k
 		b.encodeMap[k] = byte(v)
@@ -61,7 +58,7 @@ func NewCodec(encoder string, padding rune) (base2.IEncoding, error) {
 	}
 
 	if len(mp) != stdEncoderSize {
-		return nil, base2.ErrEncoderRepeatChar(codec)
+		return nil, base.ErrEncoderRepeatChar(codec)
 	}
 
 	return b, nil
@@ -116,7 +113,7 @@ func (b *base8Codec) encode(dst, src []byte) int {
 			dst[nDst+3] = b.encodeMap[val>>12&0x7]
 			dst[nDst+4] = b.encodeMap[val>>9&0x7]
 			dst[nDst+5] = b.encodeMap[val>>6&0x7]
-			if b.padding == base2.NotPadding {
+			if b.padding == base.NotPadding {
 				nDst += 6
 				return nDst
 			}
@@ -125,7 +122,7 @@ func (b *base8Codec) encode(dst, src []byte) int {
 			nDst += 8
 			return nDst
 		case 1:
-			if b.padding == base2.NotPadding {
+			if b.padding == base.NotPadding {
 				nDst += 3
 				return nDst
 			}
@@ -170,7 +167,7 @@ func (b *base8Codec) decode(dst, src []byte) (int, error) {
 	{
 		remain := (length - pad) % 8
 		if remain != 0 && remain != 3 && remain != 6 {
-			return 0, base2.ErrDecodeSrcDataSize(codec, length)
+			return 0, base.ErrDecodeSrcDataSize(codec, length)
 		}
 	}
 
@@ -182,7 +179,7 @@ func (b *base8Codec) decode(dst, src []byte) (int, error) {
 		for i := 0; i < opLength; i++ {
 			v, ok := b.decodeMap[src[i]]
 			if !ok {
-				return 0, base2.ErrEncodedText(codec, src[i], i)
+				return 0, base.ErrEncodedText(codec, src[i], i)
 			}
 			lRsh := 21 - i%8*3
 			if lRsh >= 0 {
@@ -203,7 +200,7 @@ func (b *base8Codec) decode(dst, src []byte) (int, error) {
 			return nDst, nil
 		}
 		if remain != 3 && remain != 6 {
-			return 0, base2.ErrDecodeSrcDataSize(codec, length)
+			return 0, base.ErrDecodeSrcDataSize(codec, length)
 		}
 		val, err := b.assemble(0, src, opLength, opLength+1, opLength+2)
 		if err != nil {
@@ -232,7 +229,7 @@ func (b *base8Codec) assemble(val int, src []byte, idx ...int) (int, error) {
 	for _, v := range idx {
 		elem, ok := b.decodeMap[src[v]]
 		if !ok {
-			return 0, base2.ErrEncodedText(codec, src[v], v)
+			return 0, base.ErrEncodedText(codec, src[v], v)
 		}
 		lRsh := 21 - (v % 8 * 3)
 		val |= elem << lRsh

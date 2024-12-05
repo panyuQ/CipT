@@ -202,12 +202,12 @@ func TestBase64StdRawCodec_Decode(t *testing.T) {
 }
 
 func TestXXEncode_Encode(t *testing.T) {
-	xxCoder := "+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	XXCodec, _ := NewCodec(xxCoder, base.StdPadding)
-	res, err := XXCodec.Encode([]byte("Hello, World!"))
+	XXCodec, _ := NewCodec(stdEncoder, base.StdPadding)
+	res, err := XXCodec.Encode([]byte("Hello, World!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"))
 	if err != nil {
 		t.Errorf("XXEncode() error = %v", err)
 	} else {
-		fmt.Println("正确", string(res))
+		fmt.Println(string(res))
+		fmt.Println(res)
 	}
 }

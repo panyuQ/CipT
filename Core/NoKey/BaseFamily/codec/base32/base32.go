@@ -15,7 +15,7 @@
 package base32
 
 import (
-	base2 "CipT/Core/NoKey/BaseFamily/codec/base"
+	"CipT/Core/NoKey/BaseFamily/codec/base"
 )
 
 const (
@@ -27,10 +27,10 @@ const (
 )
 
 var (
-	StdCodec, _    = NewCodec(stdEncoder, base2.StdPadding)
-	HexCodec, _    = NewCodec(hexEncoder, base2.StdPadding)
-	RawStdCodec, _ = NewCodec(stdEncoder, base2.NotPadding)
-	RawHexCodec, _ = NewCodec(hexEncoder, base2.NotPadding)
+	StdCodec, _    = NewCodec(stdEncoder, base.StdPadding)
+	HexCodec, _    = NewCodec(hexEncoder, base.StdPadding)
+	RawStdCodec, _ = NewCodec(stdEncoder, base.NotPadding)
+	RawHexCodec, _ = NewCodec(hexEncoder, base.NotPadding)
 )
 
 type base32Codec struct {
@@ -39,35 +39,32 @@ type base32Codec struct {
 	padding   rune
 }
 
-func NewCodec(encoder string, padding rune) (base2.IEncoding, error) {
+func NewCodec(encoder string, padding rune) (base.IEncoding, error) {
 	if len(encoder) != stdEncoderSize {
-		return nil, base2.ErrEncoderSize(codec, stdEncoderSize)
+		return nil, base.ErrEncoderSize(codec, stdEncoderSize)
 	}
-	if base2.IsIllegalCharacter(padding) {
-		return nil, base2.ErrPaddingIllegalChar(codec)
+	if base.IsIllegalCharacter(padding) {
+		return nil, base.ErrPaddingIllegalChar(codec)
 	}
 	b := &base32Codec{decodeMap: make(map[byte]int, stdEncoderSize)}
 	mp := make(map[rune]struct{}, stdEncoderSize)
 	for k, v := range encoder {
-		if base2.IsIllegalCharacter(v) {
-			return nil, base2.ErrEncoderIllegalChar(codec)
-		}
-		if v == padding {
-			return nil, base2.ErrPaddingAlphabet(codec)
+		if base.IsIllegalCharacter(v) {
+			return nil, base.ErrEncoderIllegalChar(codec)
 		}
 		mp[v] = struct{}{}
 		b.decodeMap[byte(v)] = k
 		b.encodeMap[k] = byte(v)
 	}
 	if len(mp) != stdEncoderSize {
-		return nil, base2.ErrEncoderRepeatChar(codec)
+		return nil, base.ErrEncoderRepeatChar(codec)
 	}
 	b.padding = padding
 	return b, nil
 }
 
 func (b *base32Codec) encodedLen(n int) int {
-	if b.padding == base2.NotPadding {
+	if b.padding == base.NotPadding {
 		return (n*8 + 4) / 5
 	}
 	return (n + 4) / 5 * 8
@@ -123,7 +120,7 @@ func (b *base32Codec) encode(dst, src []byte) {
 
 		// Pad the final quantum
 		if len(src) < 5 {
-			if b.padding == base2.NotPadding {
+			if b.padding == base.NotPadding {
 				break
 			}
 
@@ -155,7 +152,7 @@ func (b *base32Codec) Encode(src []byte) ([]byte, error) {
 }
 
 func (b *base32Codec) decodedLen(n int) int {
-	if b.padding == base2.NotPadding {
+	if b.padding == base.NotPadding {
 		return n * 5 / 8
 	}
 	return n / 8 * 5
@@ -173,10 +170,10 @@ func (b *base32Codec) decode(dst, src []byte) (n int, end bool, err error) {
 		for j := 0; j < 8; {
 
 			if len(src) == 0 {
-				if b.padding != base2.NotPadding {
+				if b.padding != base.NotPadding {
 					// We have reached the end and are missing padding
 					pos := olen - len(src) - j
-					return n, false, base2.ErrEncodedText(codec, src[pos], pos)
+					return n, false, base.ErrEncodedText(codec, src[pos], pos)
 				}
 				// We have reached the end and are not expecting any padding
 				dlen, end = j, true
@@ -188,13 +185,13 @@ func (b *base32Codec) decode(dst, src []byte) (n int, end bool, err error) {
 				// We've reached the end and there's padding
 				if len(src)+j < 8-1 {
 					// not enough padding
-					return n, false, base2.ErrEncodedText(codec, src[olen], olen)
+					return n, false, base.ErrEncodedText(codec, src[olen], olen)
 				}
 				for k := 0; k < 8-1-j; k++ {
 					if len(src) > k && src[k] != byte(b.padding) {
 						// incorrect padding
 						pos := olen - len(src) + k - 1
-						return n, false, base2.ErrEncodedText(codec, src[pos], pos)
+						return n, false, base.ErrEncodedText(codec, src[pos], pos)
 					}
 				}
 				dlen, end = j, true
@@ -205,14 +202,14 @@ func (b *base32Codec) decode(dst, src []byte) (n int, end bool, err error) {
 				// src bytes do not yield enough information to decode a dst byte.
 				if dlen == 1 || dlen == 3 || dlen == 6 {
 					pos := olen - len(src) - 1
-					return n, false, base2.ErrEncodedText(codec, src[pos], pos)
+					return n, false, base.ErrEncodedText(codec, src[pos], pos)
 				}
 				break
 			}
 			elem, ok := b.decodeMap[in]
 			if !ok {
 				pos := olen - len(src) - 1
-				return n, false, base2.ErrEncodedText(codec, src[pos], pos)
+				return n, false, base.ErrEncodedText(codec, src[pos], pos)
 			}
 			dbuf[j] = byte(elem)
 

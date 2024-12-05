@@ -15,7 +15,7 @@
 package base62
 
 import (
-	base2 "CipT/Core/NoKey/BaseFamily/codec/base"
+	"CipT/Core/NoKey/BaseFamily/codec/base"
 	"math"
 )
 
@@ -32,22 +32,22 @@ type base62Encoder struct {
 	decodeMap map[byte]int
 }
 
-func NewCodec(encoder string) (base2.IEncoding, error) {
+func NewCodec(encoder string) (base.IEncoding, error) {
 	if len(encoder) != stdEncoderSize {
-		return nil, base2.ErrEncoderSize(codec, stdEncoderSize)
+		return nil, base.ErrEncoderSize(codec, stdEncoderSize)
 	}
 	b := &base62Encoder{decodeMap: make(map[byte]int, stdEncoderSize)}
 	mp := make(map[rune]struct{})
 	for k, v := range encoder {
-		if base2.IsIllegalCharacter(v) {
-			return nil, base2.ErrEncoderIllegalChar(codec)
+		if base.IsIllegalCharacter(v) {
+			return nil, base.ErrEncoderIllegalChar(codec)
 		}
 		b.encodeMap[k] = byte(v)
 		b.decodeMap[byte(v)] = k
 		mp[v] = struct{}{}
 	}
 	if len(mp) != stdEncoderSize {
-		return nil, base2.ErrEncoderRepeatChar(codec)
+		return nil, base.ErrEncoderRepeatChar(codec)
 	}
 	return b, nil
 }
@@ -98,7 +98,7 @@ func (b *base62Encoder) deocde(src []byte) ([]byte, error) {
 	for k := range src {
 		v, ok := b.decodeMap[src[k]]
 		if !ok {
-			return nil, base2.ErrEncodedText(codec, src[k], k)
+			return nil, base.ErrEncodedText(codec, src[k], k)
 		}
 		c := 0
 		for j := cs - 1; j >= 0 && (v != 0 || c < rs); j-- {
