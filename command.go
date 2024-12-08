@@ -1,6 +1,7 @@
 package main
 
 import (
+	"CipT/Proc"
 	"flag"
 	"fmt"
 	"os"
@@ -13,11 +14,15 @@ var (
 		"window": *flag.Bool("window", false, "Windowed mode"),
 		"web":    *flag.Bool("web", false, "Web application mode"),
 		"encode": *flag.Bool("encode", false, "Encode mode"),
-		"decode": *flag.Bool("decode", true, "Decode mode"),
 	}
 
 	FlagString = map[string]string{
-		"filepath": *flag.String("filepath", "", "File path (for batch processing)"),
+		"method": *flag.String("method", "", "En/Decode method"),
+		"output": *flag.String("output", "", "File path (默认)"),
+	}
+
+	FlagInt = map[string]int{
+		"page": *flag.Int("page", 0, "Page number"),
 	}
 )
 
@@ -32,4 +37,10 @@ func changeHelp() {
 func Command() {
 	changeHelp()
 	flag.Parse()
+	if flag.NArg() < 1 {
+		return
+	}
+	proc := Proc.NewProc(FlagString["method"])
+	proc.Run(FlagInt["page"])
+
 }

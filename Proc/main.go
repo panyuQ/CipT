@@ -1,16 +1,18 @@
 package Proc
 
 type Proc struct {
-	content string
-	file    bool
-	encode  bool
-	method  string
+	input  Input
+	method string
 }
 
-func NewProc(content string, file bool, encode bool, method string) *Proc {
-	return &Proc{content, file, encode, method}
+func NewProc(method string) *Proc {
+	return &Proc{input: *NewInput(), method: method}
 }
 
-func (p *Proc) GetFunc() {
+func (p *Proc) Run(page int) {
+	switch p.method {
+	case "":
 
+		break
+	}
 }

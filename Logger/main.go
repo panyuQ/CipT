@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var GLogger, _ = NewLogger(nil, nil)
+
 type Config struct {
 	EnableStdOutput  bool // 是否启用标准输出
 	EnableFileOutput bool // 是否启用文件输出

@@ -1,4 +1,4 @@
-package main
+package Window
 
 import (
 	"fyne.io/fyne/v2/app"
@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func Window() {
+func Run() {
 
 	// 创建应用程序
 	myApp := app.New()
