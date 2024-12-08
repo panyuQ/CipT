@@ -1,6 +1,7 @@
 package NoKey
 
 import (
+	baseVariantHasBlock "CipT/Core/NoKey/BaseFamily/variant/HasBlock"
 	"bytes"
 	"errors"
 	"golang.org/x/text/encoding"
@@ -21,8 +22,6 @@ import (
 	"CipT/Core/NoKey/BaseFamily/codec/base85"
 	"CipT/Core/NoKey/BaseFamily/codec/base91"
 	"CipT/Core/NoKey/BaseFamily/codec/base92"
-	BaseVariant "CipT/Core/NoKey/BaseFamily/variant"
-
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
@@ -48,44 +47,46 @@ type codecFunc func(data []byte) ([]byte, error)
 
 // 编码和解码映射表
 var encoderFunc = map[string]codecFunc{
-	"ASCII85":  ascii85.StdCodec.Encode,
-	"Base4":    base4.StdCodec.Encode,
-	"Base8":    base8.StdCodec.Encode,
-	"Base16":   base16.StdCodec.Encode,
-	"Base24":   base24.StdCodec.Encode,
-	"Base32":   base32.StdCodec.Encode,
-	"Base36":   base36.StdCodec.Encode,
-	"Base45":   base45.StdCodec.Encode,
-	"Base58":   base58.StdCodec.Encode,
-	"Base64":   base64.StdCodec.Encode,
-	"Base85":   base85.StdCodec.Encode,
-	"Base91":   base91.StdCodec.Encode,
-	"Base92":   base92.StdCodec.Encode,
-	"Base100":  base100.StdCodec.Encode,
-	"UUEncode": BaseVariant.UUEncode.Encode,
-	"XXEncode": BaseVariant.XXEncode.Encode,
+	"ASCII85":   ascii85.StdCodec.Encode,
+	"Base4":     base4.StdCodec.Encode,
+	"Base8":     base8.StdCodec.Encode,
+	"Base16":    base16.StdCodec.Encode,
+	"Base24":    base24.StdCodec.Encode,
+	"Base32":    base32.StdCodec.Encode,
+	"Base36":    base36.StdCodec.Encode,
+	"Base45":    base45.StdCodec.Encode,
+	"Base58":    base58.StdCodec.Encode,
+	"Base64":    base64.StdCodec.Encode,
+	"Base64Url": base64.UrlCodec.Encode,
+	"Base85":    base85.StdCodec.Encode,
+	"Base91":    base91.StdCodec.Encode,
+	"Base92":    base92.StdCodec.Encode,
+	"Base100":   base100.StdCodec.Encode,
+	"UUEncode":  baseVariantHasBlock.UUEncode.Encode,
+	"XXEncode":  baseVariantHasBlock.XXEncode.Encode,
 	"URL": func(data []byte) ([]byte, error) {
 		return []byte(url.QueryEscape(string(data))), nil
 	},
 }
 
 var decoderFunc = map[string]codecFunc{
-	"ASCII85":  ascii85.StdCodec.Decode,
-	"Base4":    base4.StdCodec.Decode,
-	"Base8":    base8.StdCodec.Decode,
-	"Base16":   base16.StdCodec.Decode,
-	"Base24":   base24.StdCodec.Decode,
-	"Base32":   base32.StdCodec.Decode,
-	"Base36":   base36.StdCodec.Decode,
-	"Base45":   base45.StdCodec.Decode,
-	"Base58":   base58.StdCodec.Decode,
-	"Base64":   base64.StdCodec.Decode,
-	"Base85":   base85.StdCodec.Decode,
-	"Base91":   base91.StdCodec.Decode,
-	"Base92":   base92.StdCodec.Decode,
-	"Base100":  base100.StdCodec.Decode,
-	"UUEncode": BaseVariant.UUEncode.Decode,
-	"XXEncode": BaseVariant.XXEncode.Decode,
+	"ASCII85":   ascii85.StdCodec.Decode,
+	"Base4":     base4.StdCodec.Decode,
+	"Base8":     base8.StdCodec.Decode,
+	"Base16":    base16.StdCodec.Decode,
+	"Base24":    base24.StdCodec.Decode,
+	"Base32":    base32.StdCodec.Decode,
+	"Base36":    base36.StdCodec.Decode,
+	"Base45":    base45.StdCodec.Decode,
+	"Base58":    base58.StdCodec.Decode,
+	"Base64":    base64.StdCodec.Decode,
+	"Base64Url": base64.UrlCodec.Decode,
+	"Base85":    base85.StdCodec.Decode,
+	"Base91":    base91.StdCodec.Decode,
+	"Base92":    base92.StdCodec.Decode,
+	"Base100":   base100.StdCodec.Decode,
+	"UUEncode":  baseVariantHasBlock.UUEncode.Decode,
+	"XXEncode":  baseVariantHasBlock.XXEncode.Decode,
 	"URL": func(data []byte) ([]byte, error) {
 		res, err := url.QueryUnescape(string(data))
 		return []byte(res), err
@@ -170,4 +171,19 @@ func (t *CipT) Encode() (string, error) {
 // Decode 解码方法
 func (t *CipT) Decode() (string, error) {
 	return t.process(false)
+}
+
+func GetMethods(encode bool) []string {
+	var result []string
+	if encode {
+		for method := range encoderFunc {
+			result = append(result, method)
+		}
+
+	} else {
+		for method := range decoderFunc {
+			result = append(result, method)
+		}
+	}
+	return result
 }

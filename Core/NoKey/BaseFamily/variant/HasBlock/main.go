@@ -1,4 +1,4 @@
-package variant
+package HasBlock
 
 import (
 	"bytes"
@@ -10,25 +10,23 @@ const (
 	uuEncoder = "`!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
 )
 
-type hasBlockEncoder struct {
+type HasBlockEncoder struct {
 	charset   []byte
 	blockSize int
 }
 
+func NewHasBlockEncoder(encoder string, blockSize int) *HasBlockEncoder {
+	return &HasBlockEncoder{charset: []byte(encoder), blockSize: blockSize}
+}
+
 var (
-	XXEncode = hasBlockEncoder{
-		charset:   []byte(xxEncoder),
-		blockSize: 45,
-	}
-	UUEncode = hasBlockEncoder{
-		charset:   []byte(uuEncoder),
-		blockSize: 45,
-	}
+	XXEncode         = NewHasBlockEncoder(xxEncoder, 45)
+	UUEncode         = NewHasBlockEncoder(uuEncoder, 45)
 	conversionFailed = errors.New("has block encoder conversion failed")
 )
 
 // Encode 将数据编码为块格式
-func (config *hasBlockEncoder) Encode(data []byte) ([]byte, error) {
+func (config *HasBlockEncoder) Encode(data []byte) ([]byte, error) {
 	length := len(data)
 	data = append(data, make([]byte, 3-length%3)...)
 
@@ -58,7 +56,7 @@ func (config *hasBlockEncoder) Encode(data []byte) ([]byte, error) {
 }
 
 // Decode 将块格式的数据解码为原始数据
-func (config *hasBlockEncoder) Decode(data []byte) ([]byte, error) {
+func (config *HasBlockEncoder) Decode(data []byte) ([]byte, error) {
 	charIndex := make(map[byte]int, len(config.charset))
 	for i, c := range config.charset {
 		charIndex[c] = i
