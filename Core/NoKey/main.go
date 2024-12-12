@@ -34,9 +34,8 @@ type CipT struct {
 }
 
 // NewCipT 构造函数
-func NewCipT(text, method string) *CipT {
+func NewCipT(method string) *CipT {
 	return &CipT{
-		Text:     text,
 		Encoding: "UTF-8", // 设置默认值
 		Method:   method,
 	}
@@ -127,11 +126,11 @@ func encodeTransform(transformer *encoding.Encoder) codecFunc {
 }
 
 // 统一处理逻辑
-func (t *CipT) process(isEncode bool) (string, error) {
+func (t *CipT) process(isEncode bool, text []string) ([]string, error) {
 	// 获取转换函数
 	Encoding := encodings[t.Encoding]
 	if Encoding.ToUTF8 == nil || Encoding.FromUTF8 == nil {
-		return "", errors.New("unknown encoding: " + t.Encoding)
+		return nil, errors.New("unknown encoding: " + t.Encoding)
 	}
 
 	// 编码或解码主逻辑
@@ -142,35 +141,44 @@ func (t *CipT) process(isEncode bool) (string, error) {
 		codec = decoderFunc[t.Method]
 	}
 	if codec == nil {
-		return "", errors.New("unknown method: " + t.Method)
+		return nil, errors.New("unknown method: " + t.Method)
 	}
 
 	// 转换文本
-	data, err := []byte(t.Text), error(nil)
-	if isEncode {
-		data, err = Encoding.FromUTF8(data)
-		if err != nil {
-			return "", err
+	result := make([]string, len(text))
+	for i, item := range text {
+		data := []byte(item)
+		var err error
+		if isEncode {
+			data, err = Encoding.FromUTF8(data)
+			if err != nil {
+				return nil, err
+			}
+			data, err = codec(data)
+		} else {
+			data, err = codec(data)
+			if err != nil {
+				return nil, err
+			}
+			data, err = Encoding.ToUTF8(data)
 		}
-		data, err = codec(data)
-	} else {
-		data, err = codec(data)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		data, err = Encoding.ToUTF8(data)
+		result[i] = string(data)
 	}
-	return string(data), err
+
+	return result, nil
 }
 
 // Encode 编码方法
-func (t *CipT) Encode() (string, error) {
-	return t.process(true)
+func (t *CipT) Encode(text []string) ([]string, error) {
+	return t.process(true, text)
 }
 
 // Decode 解码方法
-func (t *CipT) Decode() (string, error) {
-	return t.process(false)
+func (t *CipT) Decode(text []string) ([]string, error) {
+	return t.process(false, text)
 }
 
 func GetMethods(encode bool) []string {

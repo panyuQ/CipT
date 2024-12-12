@@ -7,11 +7,11 @@ import (
 
 func main() {
 	Command()
-	if FlagBool["window"] {
+	if *FlagBool["window"] {
 		Window.Run()
 
 	}
-	if FlagBool["web"] {
+	if *FlagBool["web"] {
 		Web.Run()
 	}
 }

@@ -3,7 +3,6 @@ package Proc
 import (
 	"CipT/Logger"
 	"bufio"
-	"flag"
 	"os"
 	"strings"
 	"sync"
@@ -17,11 +16,11 @@ type Input struct {
 }
 
 // NewInput 创建并初始化 Input 实例
-func NewInput() *Input {
-	if flag.NArg() > 0 {
+func NewInput(in []string) *Input {
+	if len(in) > 0 {
 		var input Input
 		input.cache = make(map[string][]string) // 初始化缓存
-		for _, a := range flag.Args() {
+		for _, a := range in {
 			_, err := os.Stat(a)
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -71,16 +70,17 @@ func (input *Input) readFileWithCache(fileName string) []string {
 }
 
 // GetContent 获取分页内容（包括文本和文件内容）
-func (input *Input) GetContent(number int, page int) []string {
-	if number <= 0 || page <= 0 {
-		return nil // 无效的分页参数
-	}
+func (input *Input) GetContent(pageIndex int, pageSize int) []string {
 
 	// 存储所有内容
 	var allContent []string
 
 	// 添加 text 内容
 	allContent = append(allContent, input.Text...)
+
+	if pageSize <= 0 || pageIndex < 0 {
+		return allContent // 无效的分页参数
+	}
 
 	// 添加文件内容（从缓存中获取）
 	for _, fileName := range input.File {
@@ -89,11 +89,11 @@ func (input *Input) GetContent(number int, page int) []string {
 	}
 
 	// 实现分页
-	start := (page - 1) * number
+	start := pageIndex * pageSize
 	if start >= len(allContent) {
 		return nil // 页码超出范围
 	}
-	end := start + number
+	end := start + pageSize
 	if end > len(allContent) {
 		end = len(allContent)
 	}

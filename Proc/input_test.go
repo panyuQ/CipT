@@ -1,7 +1,6 @@
 package Proc
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"testing"
@@ -18,25 +17,20 @@ func TestInput(t *testing.T) {
 	defer os.Remove(file1)
 	defer os.Remove(file2)
 
-	// 模拟命令行参数
-	os.Args = []string{"program", file1, "nonexistent", file2}
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	flag.Parse()
-
 	// 初始化 Input
-	input := NewInput()
+	input := NewInput([]string{file1, "nonexistent", file2})
 	if input == nil {
 		t.Fatal("Expected a valid Input object, got nil")
 	}
 
 	// 测试分页获取
-	content := input.GetContent(2, 1)
+	content := input.GetContent(0, 2)
 	expected := []string{"nonexistent", "Line1"}
 	if !compareSlices(content, expected) {
 		t.Errorf("Expected %v, got %v", expected, content)
 	}
 
-	content = input.GetContent(3, 2)
+	content = input.GetContent(1, 3)
 	expected = []string{"Line3", "Line4", "A"}
 	if !compareSlices(content, expected) {
 		t.Errorf("Expected %v, got %v", expected, content)

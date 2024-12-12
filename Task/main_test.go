@@ -4,18 +4,22 @@ import (
 	"CipT/Logger"
 	"log"
 	"runtime"
+	"strconv"
 	"testing"
 )
 
 // 示例任务处理函数
-func exampleTaskHandler(args []interface{}) []interface{} {
+func exampleTaskHandler(args []string) ([]string, error) {
 	sum := 0
 	for _, arg := range args {
-		if num, ok := arg.(int); ok {
-			sum += num
+		x, e := strconv.Atoi(arg)
+		if e == nil {
+			sum += x
+		} else {
+			return nil, e
 		}
 	}
-	return []interface{}{sum}
+	return []string{strconv.Itoa(sum)}, nil
 }
 
 func TestTasks(t *testing.T) {
@@ -36,7 +40,7 @@ func TestTasks(t *testing.T) {
 
 	// 模拟添加任务
 	for i := 1; i <= 100; i++ {
-		task := NewTask(i, []interface{}{i, i + 1, i + 2})
+		task := NewTask(i, []string{strconv.Itoa(i), strconv.Itoa(i + 1), strconv.Itoa(i + 2)})
 		wp.AddTask(task)
 	}
 

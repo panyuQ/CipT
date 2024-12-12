@@ -2,8 +2,12 @@ package Task
 
 import (
 	"CipT/Logger"
+	"fmt"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
+	"time"
 )
 
 var (
@@ -18,23 +22,24 @@ var (
 
 // Task 是一个任务结构体
 type Task struct {
-	ID     int           // 这个任务的ID
-	Args   []interface{} // 这个任务的参数
-	Result []interface{} // 这个任务的结果
+	ID     int      // 这个任务的ID
+	Args   []string // 这个任务的参数
+	Result []string // 这个任务的结果
+	Error  error
 }
 
-func NewTask(id int, args []interface{}) Task {
+func NewTask(id int, args []string) Task {
 	return Task{ID: id, Args: args, Result: nil}
 }
 
 // WorkPool 是一个工作池结构体
 type WorkPool struct {
-	function  func([]interface{}) []interface{} // 任务执行函数
-	tasks     chan Task                         // 任务缓冲区
-	workers   int                               // 工作协程数量
-	waitGroup sync.WaitGroup                    // 用于等待任务完成
-	stop      chan struct{}                     // 用于广播停止信号
-	stopOnce  sync.Once                         // 确保只执行一次停止操作
+	function  func([]string) ([]string, error) // 任务执行函数
+	tasks     chan Task                        // 任务缓冲区
+	workers   int                              // 工作协程数量
+	waitGroup sync.WaitGroup                   // 用于等待任务完成
+	stop      chan struct{}                    // 用于广播停止信号
+	stopOnce  sync.Once                        // 确保只执行一次停止操作
 
 	Logger            *Logger.Logger // 日志
 	Results           chan Task      // 任务结果缓冲区
@@ -43,7 +48,7 @@ type WorkPool struct {
 }
 
 // NewWorkPool 创建一个新的工作池
-func NewWorkPool(workers, tasksBufferSize, resultsBufferSize int, taskFunc func([]interface{}) []interface{}, logger *Logger.Logger) *WorkPool {
+func NewWorkPool(workers, tasksBufferSize, resultsBufferSize int, taskFunc func([]string) ([]string, error), logger *Logger.Logger) *WorkPool {
 	if workers < minWorkers {
 		workers = maxWorkers
 	}
@@ -109,6 +114,33 @@ func (wp *WorkPool) Stop(mandatory bool) {
 	})
 }
 
+func (wp *WorkPool) Output(directory string) {
+	if directory == "" {
+		for task := range wp.Results {
+			Logger.GLogger.Info.Printf("任务%d, 参数: %s\n结果:\n\t%s\n", task.ID, task.Args, task.Result)
+		}
+	} else {
+		err := os.MkdirAll(directory, 0755)
+		if err != nil {
+			Logger.GLogger.Error.Println(err)
+		}
+		path := filepath.Join(directory, fmt.Sprintf("%s_%d-%d-%d.txt", time.Now().Format("2006-01-02_15-04-05"), wp.workers, wp.TasksBufferSize, wp.ResultsBufferSize))
+
+		file, err := os.Create(path)
+		if err != nil {
+			Logger.GLogger.Error.Println(err)
+			return
+		}
+		defer file.Close() // 确保文件关闭
+		for task := range wp.Results {
+			for _, line := range task.Result {
+				fmt.Fprintln(file, line)
+			}
+		}
+		Logger.GLogger.Info.Println("The running results are saved to:", path)
+	}
+}
+
 // worker 是一个工作goroutine，负责处理任务
 func (wp *WorkPool) worker() {
 	defer wp.waitGroup.Done()
@@ -121,7 +153,7 @@ func (wp *WorkPool) worker() {
 			}
 			//wp.logInfo("Worker", id, "is processing task", task.ID)
 			if wp.function != nil {
-				task.Result = wp.function(task.Args)
+				task.Result, task.Error = wp.function(task.Args)
 			}
 			wp.Results <- task // 将任务结果发送到结果通道
 		case <-wp.stop: // 收到停止信号
