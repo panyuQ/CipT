@@ -56,6 +56,9 @@ func (input *Input) readFileWithCache(fileName string) []string {
 	}
 	defer file.Close()
 
+	// 读取前三个字节来检查是否存在UTF-8 BOM
+	skipFileBOM(file)
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		content = append(content, strings.TrimSpace(scanner.Text()))
@@ -129,4 +132,18 @@ func (input *Input) GetAllContentCount() int {
 	}
 
 	return totalCount
+}
+
+// skipFileBOM 读取前三个字节来检查是否存在UTF-8 BOM
+func skipFileBOM(file *os.File) {
+	buf := make([]byte, 3)
+	n, _ := file.Read(buf)
+
+	// 检查是否为UTF-8 BOM
+	if n >= 3 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF {
+		// 跳过BOM
+	} else {
+		// 如果没有BOM，则将指针回退到文件开始处
+		file.Seek(0, 0)
+	}
 }
