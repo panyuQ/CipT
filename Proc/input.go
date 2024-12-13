@@ -134,7 +134,7 @@ func (input *Input) GetAllContentCount() int {
 	return totalCount
 }
 
-// skipFileBOM 读取前三个字节来检查是否存在UTF-8 BOM, 并跳过
+// skipFileBOM 读取前三个字节来检查是否存在 UTF-8 BOM, 并跳过
 func skipFileBOM(file *os.File) {
 	buf := make([]byte, 3)
 	n, _ := file.Read(buf)
