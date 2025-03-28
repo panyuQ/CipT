@@ -1,7 +1,8 @@
 package main
 
 import (
-	"CipT/Proc"
+	"CipT/logger"
+	"CipT/proc"
 	"flag"
 	"fmt"
 	"os"
@@ -47,14 +48,15 @@ func Command() {
 	if flag.NArg() < 1 {
 		return
 	}
-	proc := Proc.NewProc(flag.Args(), *FlagString["method"], *FlagBool["encode"], *FlagString["key"], *FlagString["other"])
-	proc.Config.PageSize = *FlagInt["pageSize"]
-	proc.Config.Workers = *FlagInt["workers"]
-	proc.Config.TasksBufferSize = *FlagInt["tasksBufferSize"]
-	proc.Config.ResultsBufferSize = *FlagInt["resultsBufferSize"]
-	proc.IdentifyMethod()
+	exec := proc.NewProc(flag.Args(), *FlagString["method"], *FlagBool["encode"], *FlagString["key"], *FlagString["other"])
+	exec.Config.PageSize = *FlagInt["pageSize"]
+	exec.Config.Workers = *FlagInt["workers"]
+	exec.Config.TasksBufferSize = *FlagInt["tasksBufferSize"]
+	exec.Config.ResultsBufferSize = *FlagInt["resultsBufferSize"]
+	exec.IdentifyMethod()
 	if !*FlagBool["onlyIdentify"] {
-		proc.Run()
+		exec.Run()
 	}
-	proc.Output(*FlagString["output"])
+	exec.Output(*FlagString["output"])
+	logger.GLogger.ClearEmptyLogFile()
 }

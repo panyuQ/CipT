@@ -1,8 +1,8 @@
 package main
 
 import (
-	"CipT/Proc/Web"
-	"CipT/Proc/Window"
+	"CipT/proc/Web"
+	"CipT/proc/Window"
 )
 
 func main() {
